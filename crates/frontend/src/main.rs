@@ -87,7 +87,8 @@ fn run_horizon_nro(rom_path: &str) {
     println!("Root Service:  sm: (Handle: 0x{:04X})", kernel.sm_session_handle);
 
     let display = emu_core::gpu::DisplaySurface::handheld_720p(0x9000_0000);
-    println!("Display Surface: Handheld {}x{} RGBA8_UNORM\n", display.width, display.height);
+    println!("Display Surface: Handheld {}x{} RGBA8_UNORM", display.width, display.height);
+    println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)\n");
 
     let mut cpu = Cpu::new();
     cpu.reset(HORIZON_LOAD_BASE + header.text.file_offset as u64);

@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 5)
+## ⚡ Current Capabilities (Milestones 0 - 6)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -91,6 +91,7 @@ flowchart TD
   - Time Service (`time:`): returns POSIX timestamps and system clock.
   - Human Interface Device (`hid:`): gamepad activation and Npad configuration.
   - GPU Driver Service (`nvdrv:`, `nvdrv:a`): graphics device file descriptors and IOCTL routing.
+  - Filesystem Proxy Service (`fsp-srv`, `fsp-pr`): application storage, save data, and RomFS mounting.
 - [x] **Tegra X1 Maxwell GPU & 3D Engine (`gpu/maxwell3d.rs`, `gpu/fifo.rs`)**:
   - GPFIFO command processor executing pushbuffer packets across incrementing and non-incrementing modes.
   - Maxwell 3D graphics pipeline: Render target 64-bit address binding, dimension setup, RGBA clear color registers, and hardware surface clearing.
@@ -104,8 +105,13 @@ flowchart TD
   - 64-bit FNV-1a and MurmurHash3 bytecode hashing across Vertex, Fragment, and Compute pipeline stages.
 - [x] **Visual Interface (VI) Display Engine (`gpu/display.rs`)**:
   - Presentation surface supporting Handheld 720p (1280x720) and Docked 1080p (1920x1080) with RGBA8_UNORM pixel buffer extraction.
+- [x] **Virtual File System & Package Subsystem (`fs/`)**:
+  - **PFS0 / NSP Container Engine (`fs/pfs0.rs`)**: Partition parser and extractor for application packages.
+  - **RomFS Asset FileSystem (`fs/romfs.rs`)**: Virtual hierarchical directory tree reader mounting `romfs:/` assets.
+  - **Save Data Management (`fs/host.rs`)**: Sandboxed host folder mounting for user save data (`save:/`) and SD card (`sdmc:/`).
+  - **Filesystem Proxy Service (`fs/fsp_srv.rs`)**: Full HLE IPC service implementation for `fsp-srv` (`MountRomfs`, `OpenSaveDataFileSystem`, `OpenFile`, `GetSize`, `Read`, `Write`).
 - [x] **Automated Test Suite**:
-  - 51 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, and the full GPU pipeline.
+  - 56 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, and the VFS pipeline.
 
 ---
 

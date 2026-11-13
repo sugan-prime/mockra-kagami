@@ -22,7 +22,7 @@ impl Default for ServiceManager {
 
 impl ServiceManager {
     pub fn new() -> Self {
-        let mut sm = Self {
+        let sm = Self {
             factories: Mutex::new(HashMap::new()),
         };
 
@@ -31,12 +31,14 @@ impl ServiceManager {
         sm.register_factory("hid", || Arc::new(super::hid::HidService::new()));
         sm.register_factory("nvdrv", || Arc::new(crate::gpu::nvdrv::NvDrvService::new()));
         sm.register_factory("nvdrv:a", || Arc::new(crate::gpu::nvdrv::NvDrvService::new()));
+        sm.register_factory("fsp-srv", || Arc::new(crate::fs::fsp_srv::FileSystemProxyService::new()));
+        sm.register_factory("fsp-pr", || Arc::new(crate::fs::fsp_srv::FileSystemProxyService::new()));
 
         sm
     }
 
     /// Registers a factory function for creating new service instances upon request.
-    pub fn register_factory<F>(&mut self, name: impl Into<String>, factory: F)
+    pub fn register_factory<F>(&self, name: impl Into<String>, factory: F)
     where
         F: Fn() -> Arc<dyn ServiceHandler> + Send + Sync + 'static,
     {
