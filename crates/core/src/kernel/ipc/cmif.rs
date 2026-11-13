@@ -86,6 +86,17 @@ impl CmifRequest {
             None
         }
     }
+
+    /// Reads a null-terminated UTF-8 string from `offset` in the payload.
+    pub fn read_cstring(&self, offset: usize) -> Option<String> {
+        if offset < self.raw_data.len() {
+            let slice = &self.raw_data[offset..];
+            let clean: Vec<u8> = slice.iter().take_while(|&&b| b != 0).copied().collect();
+            String::from_utf8(clean).ok()
+        } else {
+            None
+        }
+    }
 }
 
 /// A CMIF outgoing service response builder.

@@ -84,7 +84,10 @@ fn run_horizon_nro(rom_path: &str) {
     let mut kernel = KernelContext::new(true);
     let profile = kernel.profiles.get_or_default(kernel.process.title_id);
     println!("Game Profile:  {} (Target FPS: {})", profile.title_name, profile.target_fps);
-    println!("Root Service:  sm: (Handle: 0x{:04X})\n", kernel.sm_session_handle);
+    println!("Root Service:  sm: (Handle: 0x{:04X})", kernel.sm_session_handle);
+
+    let display = emu_core::gpu::DisplaySurface::handheld_720p(0x9000_0000);
+    println!("Display Surface: Handheld {}x{} RGBA8_UNORM\n", display.width, display.height);
 
     let mut cpu = Cpu::new();
     cpu.reset(HORIZON_LOAD_BASE + header.text.file_offset as u64);
@@ -136,6 +139,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  Cycle Count:  {}", cpu.cycle_count);
     println!("  Alloc Heap:   0x{:X} bytes at 0x{:08X}", kernel.process.heap_size, kernel.process.heap_base);
     println!("  Open Handles: {}", kernel.handles.len());
+    println!("  GPU Display:  {}x{} Handheld Surface", display.width, display.height);
 }
 
 /// Executes a bare-metal flat ARM64 binary with MMIO UART.

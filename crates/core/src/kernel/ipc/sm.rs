@@ -29,6 +29,8 @@ impl ServiceManager {
         // Register default built-in HLE services
         sm.register_factory("time", || Arc::new(super::time::TimeService::new()));
         sm.register_factory("hid", || Arc::new(super::hid::HidService::new()));
+        sm.register_factory("nvdrv", || Arc::new(crate::gpu::nvdrv::NvDrvService::new()));
+        sm.register_factory("nvdrv:a", || Arc::new(crate::gpu::nvdrv::NvDrvService::new()));
 
         sm
     }
