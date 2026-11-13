@@ -2,5 +2,7 @@
 /reference/
 *.pdb
 *.exe
+*.o
+*.elf
 .vscode/
 .idea/

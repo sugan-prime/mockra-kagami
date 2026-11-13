@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestone 0)
+## ⚡ Current Capabilities (Milestones 0 - 3)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -51,19 +51,32 @@ flowchart TD
   - Zero-extension guarantees: 32-bit `W` writes unconditionally clear upper 32 bits of 64-bit `X` registers.
   - Full `PSTATE` flags (`NZCV`: Negative, Zero, Carry, Overflow).
   - SIMD/NEON vector register scaffolding (`V0`–`V31`, 128-bit).
-- [x] **Memory Bus Abstraction (`bus.rs`)**:
+- [x] **Memory & Interconnect Subsystem (`bus.rs`, `system_bus.rs`, `mmio.rs`)**:
   - `MemoryBus` trait decoupled from CPU execution.
   - Endian-safe little-endian integer reads and writes (8-bit, 16-bit, 32-bit, 64-bit).
   - Out-of-bounds safety checks.
-- [x] **Core Fetch-Decode-Execute Engine (`cpu.rs`)**:
-  - Monotonic cycle counting.
-  - Foundational instruction decoding:
-    - **Move Wide (Immediate)**: `MOVZ`, `MOVN`, `MOVK` (32-bit & 64-bit).
-    - **Arithmetic (Immediate & Register)**: `ADD`, `SUB` (with optional flag setting and SP operand support).
-    - **Branching**: Unconditional Branch (`B`), Branch with Link (`BL`), Return (`RET`).
-    - **System / OS**: Supervisor Call (`SVC`) trap dispatching.
-- [x] **Automated Unit Test Suite**:
-  - 100% passing test coverage across bit operations, register invariants, and ALU execution.
+  - Modular `SystemBus` routing DRAM memory regions and MMIO peripherals.
+  - `DebugUart` mapped at `0xD000_0000` with live guest stdout streaming.
+- [x] **AArch64 CPU Core & Opcode Dispatch (`cpu.rs`)**:
+  - **Move Wide (Immediate)**: `MOVZ`, `MOVN`, `MOVK` (32-bit & 64-bit).
+  - **Arithmetic (Immediate & Register)**: `ADD`, `SUB` (with flag setting and SP operand support).
+  - **Branching**: Unconditional Branch (`B`), Branch with Link (`BL`), Return (`RET`), Conditionals (`B.cond` across all 15 condition codes), Compare & Branch (`CBZ`, `CBNZ`).
+  - **Address Generation**: `ADR`, `ADRP` (PC-relative 21-bit signed offset address generation).
+  - **Memory Load & Store**: `LDR`, `STR`, `LDRSW`, `LDRH`, `STRH`, `LDRB`, `STRB` (unsigned immediate, post/pre-index, and unscaled modes), `LDP`, `STP` register pair operations.
+  - **Logicals & Comparisons**: `AND`, `ORR`, `EOR`, `ANDS`/`TST`, `CMP`.
+  - **System / OS**: Supervisor Call (`SVC`) trap dispatching.
+- [x] **Horizon OS HLE Microkernel & Executable Loader (`loader/nro.rs`, `kernel/svc.rs`)**:
+  - **NRO Parser**: Parses `NRO0` header, `.text`, `.rodata`, `.data`, `.bss`, and `MOD0` relative offset.
+  - **Dynamic Relocations**: Parses `MOD0` ELF dynamic table (`DT_RELA`, `DT_RELASZ`) and resolves `R_AARCH64_RELATIVE` relocations at load base.
+  - **Supervisor Call (SVC) Dispatcher**:
+    - `svcOutputDebugString` (0x27)
+    - `svcSetHeapSize` (0x35)
+    - `svcExitProcess` (0x07)
+    - `svcSleepThread` (0x0B)
+    - `svcGetInfo` (0x29)
+  - **In-Memory Codecave / IPSwitch Dynamic Patch Engine (`kernel/patch.rs`)**: Runtime memory overrides with expected-value guards for 60fps patches and bug fixes without altering binaries on disk.
+- [x] **Automated Test Suite**:
+  - 24 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, and Horizon OS SVC syscalls.
 
 ---
 
@@ -81,39 +94,46 @@ Run the full automated test suite across all workspace crates:
 cargo test
 ```
 
-### Running the Test Runner
+### Running the Emulator
 
-Execute the headless test runner with a ROM binary:
+Execute the frontend with an NRO or bare-metal ROM:
 
 ```bash
-# Run default bare-metal test ROM:
+# Run default Horizon OS homebrew NRO:
 cargo run --bin frontend
 
-# Or run any custom raw AArch64 flat binary:
+# Or run any custom Nintendo Relocatable Object (.nro):
+cargo run --bin frontend -- tests/test_roms/hello_horizon.nro
+
+# Or run a bare-metal ARM64 flat binary (.bin):
 cargo run --bin frontend -- tests/test_roms/hello_uart.bin
 ```
 
-**Live Output:**
+**Horizon OS NRO Execution Output:**
 ```text
-=== Switch-Emulator (Rust AArch64 Bare-Metal Runner) ===
+=== Switch-Emulator (Rust AArch64 & Horizon OS HLE Runner) ===
 
-Loading ROM: tests/test_roms/hello_uart.bin
-Mapped RAM:   0x80000000 - 0x80100000
-Mapped UART:  0xD0000000 - 0xD0001000
-Entry Point:  0x0000000080000000
+Examining target binary: tests/test_roms/hello_horizon.nro
+Detected format: Nintendo Relocatable Object (NRO0)
+Starting Horizon OS HLE Subsystem...
 
---- [Guest Execution Output] ---
-Hello from ARM64 Bare-Metal ROM!
-Test Passed: Sum(1..10) == 55
+NRO Executable Loaded:
+  Load Base:   0x0000007100000000
+  Text:        offset: 0x00000000, size: 0x200
+  Rodata:      offset: 0x00000200, size: 0x100
+  Data:        offset: 0x00000300, size: 0x100
+  BSS Size:    0x1000 bytes
 
---- [Execution Ended: SVC 0x0000] ---
+--- [Horizon Guest Execution Output] ---
+Hello Horizon OS from NRO!
 
---- Summary ---
-  Status:       Supervisor Call (SVC)
-  PC:           0x0000000080000054
-  SP:           0x0000000080008000
-  Total Cycles: 302
-  Flags (NZCV): N=0 Z=1 C=1 V=0
+--- [Horizon Process Exited: svcExitProcess] ---
+
+--- Process Execution Summary ---
+  Exit Status:  Process terminated gracefully (svcExitProcess)
+  Final PC:     0x00000071000000A0
+  Cycle Count:  9
+  Alloc Heap:   0x200000 bytes at 0x88000000
 ```
 
 ---
@@ -135,13 +155,22 @@ Test Passed: Sum(1..10) == 55
   - PC-relative addressing (`ADR`, `ADRP`).
   - `load_flat_binary` loader for external `.bin` executable files.
   - Standalone compiled assembly test ROM (`hello_uart.s` -> `hello_uart.bin`) with automated integration tests.
-- [ ] **Milestone 3: Horizon OS Microkernel & NRO Loader**
-  - Parse `.nro` (Nintendo Relocatable Object) and `MOD0` relocation tables.
-  - Implement essential Horizon SVCs: `svcOutputDebugString`, `svcSetHeapSize`, `svcExitProcess`.
-  - Boot minimal `libnx` "Hello World" homebrew.
-- [ ] **Milestone 4: GPU Display & Graphics Frontend**
-  - Linear 1280x720 32bpp RGBA framebuffer mapping.
-  - SDL3 / Raylib window display.
+- [x] **Milestone 3: Horizon OS Kernel Foundation & NRO Loader**
+  - Parse `.nro` (Nintendo Relocatable Object) headers and segments (`.text`, `.rodata`, `.data`, `.bss`).
+  - Parse `MOD0` header and apply ELF dynamic relocations (`R_AARCH64_RELATIVE`).
+  - Horizon OS SVC Dispatcher: `svcOutputDebugString` (0x27), `svcSetHeapSize` (0x35), `svcExitProcess` (0x07), `svcSleepThread` (0x0B), `svcGetInfo` (0x29).
+  - Dynamic Codecave & In-Memory Patch Engine (IPSwitch / Cemu-style runtime patching).
+  - Automated integration test executing an assembled Switch homebrew `.nro`.
+- [ ] **Milestone 4: Game Profiles & Multithreaded Kernel Objects**
+  - Per-TitleId Game Profile Registry (custom memory boundaries, timing quirks, and patch profiles).
+  - Microkernel synchronization & thread management (`KProcess`, `KThread`, `KEvent`, `KMutex`).
+  - Horizon OS IPC (Inter-Process Communication via CMIF / HIPC service dispatch: `sm:`, `fsp-srv`, `hid`, `time`).
+- [ ] **Milestone 5: GPU Subsystem & Graphics Presentation**
+  - NVDRV service interface (`nvhost-ctrl`, `nvmap`, `ioctl` handling).
+  - Tegra Command FIFO pushbuffer & 3D state machine.
+  - GPU Buffer Cache with Dirty Memory Page Tracking (guard-page write interception).
+  - Shader Transpiler foundation & persistent disk shader cache (bytecode hashing).
+  - SDL3 / Vulkan window presentation.
 
 ---
 
