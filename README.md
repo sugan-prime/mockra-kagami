@@ -83,42 +83,37 @@ cargo test
 
 ### Running the Test Runner
 
-Execute the headless test runner to run the built-in bare-metal test binary:
+Execute the headless test runner with a ROM binary:
 
 ```bash
+# Run default bare-metal test ROM:
 cargo run --bin frontend
+
+# Or run any custom raw AArch64 flat binary:
+cargo run --bin frontend -- tests/test_roms/hello_uart.bin
 ```
 
-**Sample Output:**
+**Live Output:**
 ```text
-=== Switch-Emulator (Rust AArch64 Core Prototype) ===
-Milestone 1: Testing Memory Access, Flags & Control Flow
+=== Switch-Emulator (Rust AArch64 Bare-Metal Runner) ===
 
-Starting execution at PC: 0x0000000080000000...
+Loading ROM: tests/test_roms/hello_uart.bin
+Mapped RAM:   0x80000000 - 0x80100000
+Mapped UART:  0xD0000000 - 0xD0001000
+Entry Point:  0x0000000080000000
 
-[Step 0001] Executed at 0x80000000 (PC now: 0x80000004)
-[Step 0002] Executed at 0x80000004 (PC now: 0x80000008)
-[Step 0003] Executed at 0x80000008 (PC now: 0x8000000C)
-[Step 0004] Executed at 0x8000000C (PC now: 0x80000010)
-[Step 0034] Executed at 0x80000018 (PC now: 0x8000001C)
-[Step 0035] Executed at 0x8000001C (PC now: 0x80000020)
-[Step 0036] Executed at 0x80000020 (PC now: 0x80000024)
+--- [Guest Execution Output] ---
+Hello from ARM64 Bare-Metal ROM!
+Test Passed: Sum(1..10) == 55
 
-[TRAP] Supervisor Call (SVC 0x0042) invoked at PC: 0x80000024
+--- [Execution Ended: SVC 0x0000] ---
 
---- Register Dump ---
-  X0 (Counter):     0 (0x0000000000000000)
-  X1 (Sum Result):  55 (0x0000000000000037)
-  X2 (Target Addr): 0x0000000080002000
-  X3 (Loaded Back): 55 (0x0000000000000037)
-  SP:               0x0000000000000000
-  PC:               0x0000000080000028
-  Flags (NZCV):     N=0 Z=1 C=1 V=0
-  Total Cycles:     37
-
---- Memory Verification ---
-  Value at 0x80002000: 55 (0x0000000000000037)
-  -> Memory write and read-back successfully verified!
+--- Summary ---
+  Status:       Supervisor Call (SVC)
+  PC:           0x0000000080000054
+  SP:           0x0000000080008000
+  Total Cycles: 302
+  Flags (NZCV): N=0 Z=1 C=1 V=0
 ```
 
 ---
@@ -134,9 +129,12 @@ Starting execution at PC: 0x0000000080000000...
   - Compare and branch: `CBZ`, `CBNZ` (32-bit and 64-bit zero/non-zero branch).
   - Register logicals: `AND`, `ORR` (`MOV`), `EOR`, `ANDS` (`TST`).
   - Comparison operations: `CMP` (immediate & register via `SUBS` to `XZR`/`WZR`).
-- [ ] **Milestone 2: Bare-Metal Test ROM Runner**
-  - Load flat `.bin` binaries into virtual memory.
-  - Memory-mapped I/O (MMIO) UART output port for guest logging.
+- [x] **Milestone 2: Bare-Metal Test ROM Runner & MMIO UART**
+  - Modular `SystemBus` routing accesses to DRAM and peripherals.
+  - `MmioDevice` trait and `DebugUart` mapped at `0xD000_0000` for live guest string output.
+  - PC-relative addressing (`ADR`, `ADRP`).
+  - `load_flat_binary` loader for external `.bin` executable files.
+  - Standalone compiled assembly test ROM (`hello_uart.s` -> `hello_uart.bin`) with automated integration tests.
 - [ ] **Milestone 3: Horizon OS Microkernel & NRO Loader**
   - Parse `.nro` (Nintendo Relocatable Object) and `MOD0` relocation tables.
   - Implement essential Horizon SVCs: `svcOutputDebugString`, `svcSetHeapSize`, `svcExitProcess`.

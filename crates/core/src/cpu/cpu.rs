@@ -373,6 +373,26 @@ impl Cpu {
 
     fn execute_data_processing_imm(&mut self, instr: Instruction) -> Result<StepResult, CpuError> {
         let is_64 = instr.is_64bit();
+
+        // 1. PC-relative addressing: ADR / ADRP (bits [25:24] == 00)
+        if instr.bits(24, 25) == 0b00 {
+            let is_adrp = instr.bit(31);
+            let immlo = instr.bits(29, 30);
+            let immhi = instr.bits(5, 23);
+            let imm21 = (immhi << 2) | immlo;
+            let target = if is_adrp {
+                let offset = sign_extend_64(imm21 as u64, 21) << 12;
+                let pc_page = self.regs.pc & !0xFFF;
+                (pc_page as i64).wrapping_add(offset) as u64
+            } else {
+                let offset = sign_extend_64(imm21 as u64, 21);
+                (self.regs.pc as i64).wrapping_add(offset) as u64
+            };
+
+            self.regs.set_x(instr.rd(), target);
+            return Ok(StepResult::Continue);
+        }
+
         let opc = instr.bits(23, 25);
 
         match opc {
