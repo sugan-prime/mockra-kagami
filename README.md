@@ -110,8 +110,13 @@ flowchart TD
   - **RomFS Asset FileSystem (`fs/romfs.rs`)**: Virtual hierarchical directory tree reader mounting `romfs:/` assets.
   - **Save Data Management (`fs/host.rs`)**: Sandboxed host folder mounting for user save data (`save:/`) and SD card (`sdmc:/`).
   - **Filesystem Proxy Service (`fs/fsp_srv.rs`)**: Full HLE IPC service implementation for `fsp-srv` (`MountRomfs`, `OpenSaveDataFileSystem`, `OpenFile`, `GetSize`, `Read`, `Write`).
+- [x] **Audio Subsystem (`audio/`)**:
+  - **DSP Audio Mixer (`audio/dsp.rs`)**: Multi-channel voice mixer (up to 256 voices) supporting PCM16, linear interpolation resampling, volume/panning gain matrices, submix buses, and biquad IIR filtering.
+  - **Audio Out Service (`audio/audout.rs`)**: Full HLE implementation for `audout:u` and `audout:a` (`ListAudioOuts`, `OpenAudioOut`, `AppendAudioOutBuffer`, `RegisterBufferEvent`, `GetReleasedAudioOutBuffers`, `ContainsAudioOutBuffer`).
+  - **Audio Renderer Service (`audio/audren.rs`)**: Modern DSP pipeline for games (`audren:u`, `audren:a`) with `OpenAudioRenderer`, `RequestUpdate` command buffer parsing, voice state management, frame tick synchronization, and `IAudioDevice` volume control.
+  - **Audio Diagnostics & Verification**: Stereo 48,000 Hz circular ring buffer, RMS energy and peak amplitude calculations, and automated RIFF/WAVE container file generation.
 - [x] **Automated Test Suite**:
-  - 56 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, and the VFS pipeline.
+  - 62 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, and audio DSP streaming.
 
 ---
 

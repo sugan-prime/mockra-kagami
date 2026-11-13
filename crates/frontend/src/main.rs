@@ -88,7 +88,8 @@ fn run_horizon_nro(rom_path: &str) {
 
     let display = emu_core::gpu::DisplaySurface::handheld_720p(0x9000_0000);
     println!("Display Surface: Handheld {}x{} RGBA8_UNORM", display.width, display.height);
-    println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)\n");
+    println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)");
+    println!("Audio Services: audout:u, audren:u (DSP 48kHz Stereo)\n");
 
     let mut cpu = Cpu::new();
     cpu.reset(HORIZON_LOAD_BASE + header.text.file_offset as u64);

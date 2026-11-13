@@ -8,6 +8,7 @@ pub use hid::HidService;
 pub use sm::ServiceManager;
 pub use time::TimeService;
 
+use crate::kernel::object::KEvent;
 use std::sync::Arc;
 use thiserror::Error;
 
@@ -29,6 +30,8 @@ pub struct IpcContext {
     pub response: CmifResponse,
     /// New service sessions generated during dispatch (e.g. from `sm:GetService`).
     pub spawned_sessions: Vec<(String, Arc<dyn ServiceHandler>)>,
+    /// Readable event handles created and returned to caller (e.g. `RegisterBufferEvent`).
+    pub spawned_events: Vec<KEvent>,
 }
 
 impl IpcContext {
@@ -37,6 +40,7 @@ impl IpcContext {
             request,
             response: CmifResponse::success(),
             spawned_sessions: Vec::new(),
+            spawned_events: Vec::new(),
         }
     }
 }

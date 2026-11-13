@@ -214,6 +214,13 @@ impl KernelContext {
                         ipc_ctx.response.push_u32(new_h);
                     }
 
+                    // Register newly spawned events into handle table
+                    for event in ipc_ctx.spawned_events {
+                        let new_h = self.handles.insert(KernelObject::ReadableEvent(event));
+                        ipc_ctx.response.push_handle(new_h);
+                        ipc_ctx.response.push_u32(new_h);
+                    }
+
                     // Write response back to TLS buffer
                     let mut out_buf = [0u8; 0x100];
                     let written = ipc_ctx.response.serialize(&mut out_buf)?;

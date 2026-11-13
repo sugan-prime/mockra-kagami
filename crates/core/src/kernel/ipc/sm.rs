@@ -33,6 +33,12 @@ impl ServiceManager {
         sm.register_factory("nvdrv:a", || Arc::new(crate::gpu::nvdrv::NvDrvService::new()));
         sm.register_factory("fsp-srv", || Arc::new(crate::fs::fsp_srv::FileSystemProxyService::new()));
         sm.register_factory("fsp-pr", || Arc::new(crate::fs::fsp_srv::FileSystemProxyService::new()));
+        sm.register_factory("audout:u", || Arc::new(crate::audio::AudioOutService::new()));
+        sm.register_factory("audout:a", || Arc::new(crate::audio::AudioOutService::new()));
+        sm.register_factory("audout", || Arc::new(crate::audio::AudioOutService::new()));
+        sm.register_factory("audren:u", || Arc::new(crate::audio::AudioRendererService::new()));
+        sm.register_factory("audren:a", || Arc::new(crate::audio::AudioRendererService::new()));
+        sm.register_factory("audren", || Arc::new(crate::audio::AudioRendererService::new()));
 
         sm
     }

@@ -27,6 +27,15 @@ pub struct CmifRequest {
 }
 
 impl CmifRequest {
+    /// Creates a manual CMIF request (useful for testing and programmatic dispatch).
+    pub fn new(command_id: u32, raw_data: Vec<u8>) -> Self {
+        Self {
+            command_id,
+            raw_data,
+            in_handles: Vec::new(),
+        }
+    }
+
     /// Parses a CMIF request from an IPC buffer.
     pub fn parse(buffer: &[u8]) -> Result<Self, CmifError> {
         // Find "SFCI" magic within the first 64 bytes (typically at offset 0x00 or 0x10)
