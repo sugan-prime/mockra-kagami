@@ -2,6 +2,7 @@
 //!
 //! Models core kernel synchronization and IPC objects: Events, Threads, Processes, and Sessions.
 
+use crate::cpu::registers::RegisterFile;
 use crate::kernel::ipc::ServiceHandler;
 use std::sync::{Arc, Mutex};
 
@@ -87,6 +88,10 @@ pub struct KThread {
     pub stack_top: u64,
     pub priority: i32,
     pub status: ThreadStatus,
+    pub regs: RegisterFile,
+    pub core_id: u8,
+    pub arg: u64,
+    pub wait_handle: Option<u32>,
 }
 
 impl KThread {
@@ -97,6 +102,10 @@ impl KThread {
         stack_top: u64,
         priority: i32,
     ) -> Self {
+        let mut regs = RegisterFile::default();
+        regs.pc = entry_point;
+        regs.sp = stack_top;
+        regs.tpidr_el0 = thread_id;
         Self {
             thread_id,
             name: name.into(),
@@ -104,6 +113,10 @@ impl KThread {
             stack_top,
             priority,
             status: ThreadStatus::Runnable,
+            regs,
+            core_id: 0,
+            arg: 0,
+            wait_handle: None,
         }
     }
 }

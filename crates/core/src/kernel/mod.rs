@@ -3,6 +3,7 @@ pub mod ipc;
 pub mod object;
 pub mod patch;
 pub mod profile;
+pub mod scheduler;
 pub mod svc;
 
 pub use handle_table::HandleTable;
@@ -10,4 +11,5 @@ pub use ipc::{CmifRequest, CmifResponse, IpcContext, IpcError, ServiceHandler, S
 pub use object::{KEvent, KProcess, KSession, KThread, KernelObject, ProcessStatus, ThreadStatus};
 pub use patch::{MemoryPatch, PatchError, PatchManager};
 pub use profile::{GameProfile, ProfileRegistry};
+pub use scheduler::{KScheduler, DEFAULT_APPLICATION_CORE, NUM_CORES};
 pub use svc::{KernelContext, KernelError, Process, SvcOutcome};

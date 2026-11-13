@@ -3,9 +3,10 @@
 use crate::cpu::cpu::Cpu;
 use crate::kernel::handle_table::HandleTable;
 use crate::kernel::ipc::{CmifError, CmifRequest, IpcContext, IpcError, ServiceManager};
-use crate::kernel::object::KernelObject;
+use crate::kernel::object::{KThread, KernelObject};
 use crate::kernel::patch::PatchManager;
 use crate::kernel::profile::ProfileRegistry;
+use crate::kernel::scheduler::KScheduler;
 use crate::memory::bus::{MemoryBus, MemoryError};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
@@ -63,6 +64,7 @@ pub struct KernelContext {
     pub debug_log: Arc<Mutex<String>>,
     pub mirror_stdout: bool,
     pub tls_base: u64,
+    pub scheduler: KScheduler,
 }
 
 impl Default for KernelContext {
@@ -77,6 +79,10 @@ impl KernelContext {
         let service_manager = Arc::new(ServiceManager::new());
         let sm_session_handle = handles.create_session("sm:", service_manager.clone());
 
+        let mut scheduler = KScheduler::new();
+        let main_thread = KThread::new(1, "MainThread", 0x710000_0000, 0x8000_8000, 44);
+        scheduler.register_main_thread(main_thread);
+
         Self {
             process: Process::default(),
             patch_manager: PatchManager::new(),
@@ -87,6 +93,7 @@ impl KernelContext {
             debug_log: Arc::new(Mutex::new(String::new())),
             mirror_stdout,
             tls_base: 0x1000,
+            scheduler,
         }
     }
 
@@ -109,10 +116,121 @@ impl KernelContext {
                 Ok(SvcOutcome::ExitProcess)
             }
 
+            // 0x08: svcCreateThread(entry_point: u64, arg: u64, stack_top: u64, priority: i32, core_id: i32) -> out_handle: u32
+            0x08 => {
+                let entry = cpu.regs.get_x(1);
+                let arg = cpu.regs.get_x(2);
+                let stack_top = cpu.regs.get_x(3);
+                let priority = cpu.regs.get_w(4) as i32;
+                let core_id = cpu.regs.get_w(5) as u8;
+
+                let tid = self.scheduler.create_thread("GuestThread", entry, arg, stack_top, priority, core_id);
+                let thread_obj = self.scheduler.threads.get(&tid).unwrap().clone();
+                let handle = self.handles.insert(KernelObject::Thread(Arc::new(Mutex::new(thread_obj))));
+
+                cpu.regs.set_x(1, handle as u64);
+                cpu.regs.set_x(0, 0); // ResultSuccess
+                Ok(SvcOutcome::Continue)
+            }
+
+            // 0x09: svcStartThread(thread_handle: u32)
+            0x09 => {
+                let handle = cpu.regs.get_w(0);
+                if let Some(KernelObject::Thread(t)) = self.handles.get(handle) {
+                    let tid = t.lock().unwrap().thread_id;
+                    self.scheduler.start_thread(tid);
+                    cpu.regs.set_x(0, 0); // Success
+                } else {
+                    cpu.regs.set_x(0, 0xE401); // Invalid Handle
+                }
+                Ok(SvcOutcome::Continue)
+            }
+
+            // 0x0A: svcExitThread()
+            0x0A => {
+                let curr_tid = if cpu.regs.tpidr_el0 != 0 {
+                    cpu.regs.tpidr_el0
+                } else {
+                    let mut found = None;
+                    for opt in &self.scheduler.current_threads {
+                        if let Some(tid) = *opt {
+                            if tid != 1 {
+                                found = Some(tid);
+                                break;
+                            }
+                        }
+                    }
+                    found.or(self.scheduler.current_threads[0]).unwrap_or(1)
+                };
+                self.scheduler.exit_thread(curr_tid);
+                Ok(SvcOutcome::YieldThread)
+            }
+
             // 0x0B: svcSleepThread(nanoseconds: u64)
             0x0B => {
                 cpu.regs.set_x(0, 0); // ResultCode: Success (0)
                 Ok(SvcOutcome::YieldThread)
+            }
+
+            // 0x0F: svcSetThreadCoreMask(thread_handle: u32, in_core_id: i32, core_mask: u64)
+            0x0F => {
+                let handle = cpu.regs.get_w(0);
+                let in_core = cpu.regs.get_w(1) as u8;
+                if let Some(KernelObject::Thread(t)) = self.handles.get(handle) {
+                    let tid = t.lock().unwrap().thread_id;
+                    if let Some(thread) = self.scheduler.threads.get_mut(&tid) {
+                        thread.core_id = in_core.min(3);
+                    }
+                    cpu.regs.set_x(0, 0);
+                } else {
+                    cpu.regs.set_x(0, 0xE401);
+                }
+                Ok(SvcOutcome::Continue)
+            }
+
+            // 0x1A: svcArbitrateLock(waiter_handle: u32, mutex_addr: u64, tag: u32)
+            0x1A => {
+                let mutex_addr = cpu.regs.get_x(1);
+                let curr_tid = if cpu.regs.tpidr_el0 != 0 {
+                    cpu.regs.tpidr_el0
+                } else {
+                    let mut found = None;
+                    for opt in &self.scheduler.current_threads {
+                        if let Some(tid) = *opt {
+                            if tid != 1 {
+                                found = Some(tid);
+                                break;
+                            }
+                        }
+                    }
+                    found.or(self.scheduler.current_threads[0]).unwrap_or(1)
+                };
+                self.scheduler.arbitrate_lock(curr_tid, mutex_addr, &cpu.regs);
+                cpu.regs.set_x(0, 0);
+                Ok(SvcOutcome::YieldThread)
+            }
+
+            // 0x1B: svcArbitrateUnlock(mutex_addr: u64)
+            0x1B => {
+                let mutex_addr = cpu.regs.get_x(0);
+                self.scheduler.arbitrate_unlock(mutex_addr);
+                cpu.regs.set_x(0, 0);
+                Ok(SvcOutcome::Continue)
+            }
+
+            // 0x25: svcGetThreadId(thread_handle: u32) -> thread_id: u64
+            0x25 => {
+                let handle = cpu.regs.get_w(1);
+                if let Some(KernelObject::Thread(t)) = self.handles.get(handle) {
+                    cpu.regs.set_x(1, t.lock().unwrap().thread_id);
+                } else if cpu.regs.tpidr_el0 != 0 {
+                    cpu.regs.set_x(1, cpu.regs.tpidr_el0);
+                } else {
+                    let curr_tid = self.scheduler.current_threads[0].unwrap_or(1);
+                    cpu.regs.set_x(1, curr_tid);
+                }
+                cpu.regs.set_x(0, 0);
+                Ok(SvcOutcome::Continue)
             }
 
             // 0x18: svcWaitSynchronization(out_index: &mut i32, handles_ptr: u64, num_handles: i32, timeout_ns: i64)
@@ -157,6 +275,7 @@ impl KernelContext {
                 match self.handles.get(handle) {
                     Some(KernelObject::WritableEvent(event)) => {
                         event.signal();
+                        self.scheduler.signal_handle(handle);
                         cpu.regs.set_x(0, 0); // Success
                     }
                     _ => {

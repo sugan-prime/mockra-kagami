@@ -91,6 +91,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)");
     println!("Audio Services: audout:u, audren:u (DSP 48kHz Stereo)");
     println!("JIT Engine:    BasicBlock Translation & Fastmem Paging");
+    println!("Scheduler:     4 Cores (Cores 0-2 Title, Core 3 OS) & Futex Arbitration");
     println!("System HLE:    set:sys, appletOE, acc:u0, hid (200Hz Shared Memory)\n");
 
     let mut cpu = Cpu::new();
@@ -143,6 +144,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  Cycle Count:  {}", cpu.cycle_count);
     println!("  Alloc Heap:   0x{:X} bytes at 0x{:08X}", kernel.process.heap_size, kernel.process.heap_base);
     println!("  Open Handles: {}", kernel.handles.len());
+    println!("  Active Threads: {}", kernel.scheduler.active_thread_count());
     println!("  GPU Display:  {}x{} Handheld Surface", display.width, display.height);
 }
 

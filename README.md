@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 9)
+## ⚡ Current Capabilities (Milestones 0 - 10)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -69,16 +69,27 @@ flowchart TD
   - **NRO Parser**: Parses `NRO0` header, `.text`, `.rodata`, `.data`, `.bss`, and `MOD0` relative offset.
   - **Dynamic Relocations**: Parses `MOD0` ELF dynamic table (`DT_RELA`, `DT_RELASZ`) and resolves `R_AARCH64_RELATIVE` relocations at load base.
   - **Supervisor Call (SVC) Dispatcher**:
-    - `svcOutputDebugString` (0x27): writes guest string buffers to host debug logger.
-    - `svcSetHeapSize` (0x35): expands process heap at `0x88000000`.
-    - `svcExitProcess` (0x07): signals graceful termination to interpreter loop.
+    - `svcCreateThread` (0x08): creates guest threads with entry point, arg, stack, priority, and core affinity.
+    - `svcStartThread` (0x09): enqueues guest threads into active core run queues.
+    - `svcExitThread` (0x0A): terminates calling guest threads.
     - `svcSleepThread` (0x0B): yields single-threaded interpreter execution.
-    - `svcGetInfo` (0x29): returns core mask, physical RAM sizing (4GB), and memory limits.
-    - `svcCreateEvent` (0x45): creates connected readable/writable event pairs.
-    - `svcSignalEvent` (0x1E) & `svcClearEvent` (0x1F): signals/clears kernel synchronization events.
+    - `svcSetThreadCoreMask` (0x0F): sets thread core affinity.
+    - `svcArbitrateLock` (0x1A) & `svcArbitrateUnlock` (0x1B): userland futex mutex locking and unlocking.
     - `svcWaitSynchronization` (0x18): waits on single or multiple handles with timeout and auto-reset.
+    - `svcSignalEvent` (0x1E) & `svcClearEvent` (0x1F): signals/clears kernel synchronization events and wakes waiting threads.
     - `svcSendSyncRequest` (0x21): dispatches IPC requests to HLE services via TLS command buffer.
+    - `svcGetThreadId` (0x25): retrieves active or specified thread ID.
+    - `svcOutputDebugString` (0x27): writes guest string buffers to host debug logger.
+    - `svcGetInfo` (0x29): returns core mask, physical RAM sizing (4GB), and memory limits.
+    - `svcSetHeapSize` (0x35): expands process heap at `0x88000000`.
+    - `svcCreateEvent` (0x45): creates connected readable/writable event pairs.
+    - `svcExitProcess` (0x07): signals graceful termination to interpreter loop.
   - **In-Memory Codecave / IPSwitch Dynamic Patch Engine (`kernel/patch.rs`)**: Runtime memory overrides with expected-value guards for 60fps patches and bug fixes without altering binaries on disk.
+- [x] **Multi-Core Thread Scheduler & Synchronization (`kernel/scheduler.rs`, `kernel/object.rs`)**:
+  - 4-core scheduler architecture (Cores 0, 1, 2 for application title execution; Core 3 for Horizon OS kernel services).
+  - Priority-based per-core run queues, thread status transitions (`Runnable`, `Waiting`, `Paused`, `Terminated`).
+  - Register state preservation and context switching across virtual cores.
+  - Fast userland mutex (futex) waiter queues and signal awakening.
 - [x] **Game Profile Registry & Title Configuration (`kernel/profile.rs`)**:
   - Pre-populated title database keyed by 64-bit Title ID (`01007EF00011E000` BotW, `0100000000010000` Odyssey, `01006A800016E000` Smash Ultimate, `01006F8002326000` Animal Crossing, `0100152000022000` Mario Kart 8).
   - Configures target FPS, heap sizing, and per-title GPU accuracy profiles.
@@ -128,7 +139,7 @@ flowchart TD
   - **Applet Manager Services (`kernel/ipc/applet.rs`)**: `appletOE` / `appletAE` application lifecycle proxy, Docked/Handheld operation mode switching, and display layers.
   - **Account Management Services (`kernel/ipc/account.rs`)**: `acc:u0` / `acc:u1` user profile manager and active credentials.
 - [x] **Automated Test Suite**:
-  - 72 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, and the complete commercial game pipeline.
+  - 79 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, commercial game readiness, and multi-core thread scheduling with futex arbitration.
 
 ---
 
@@ -223,6 +234,30 @@ Hello Horizon OS from NRO!
   - GPU Buffer Cache with 4KB Dirty Memory Page Tracking.
   - Persistent Maxwell shader bytecode cache with FNV-1a & MurmurHash3 hashing.
   - Display engine supporting Handheld 720p / Docked 1080p frame presentation.
+- [x] **Milestone 6: Virtual File System & Package Subsystem**
+  - PFS0 / NSP partition format parser and extractor.
+  - Hierarchical RomFS asset filesystem reader (`romfs:/`).
+  - Host directory mounting for user save data (`save:/`) and SD card (`sdmc:/`).
+  - `fsp-srv` / `fsp-pr` HLE IPC service implementation.
+- [x] **Milestone 7: Audio Subsystem & Hardware DSP**
+  - High-performance multi-channel PCM audio mixer (up to 256 voices, biquad IIR filtering, resampling).
+  - Horizon OS Audio Out (`audout:u`, `audout:a`) and Audio Renderer (`audren:u`, `audren:a`) HLE services.
+  - 48 kHz stereo ring buffer, RMS energy tracking, and WAV file export.
+- [x] **Milestone 8: High-Performance Execution & Dynamic Binary Translation (JIT / Fastmem)**
+  - 4KB paged virtual memory manager (`Fastmem`) with $O(1)$ page lookups and dirty tracking.
+  - Pre-decoded intermediate representation (`MicroOp`) and basic block compilation.
+  - Direct branch chaining, cache invalidation, and seamless interpreter fallback (`JitEngine`).
+- [x] **Milestone 9: Commercial Game Readiness, HID Input & Title Packaging**
+  - Nintendo Content Archive (NCA3) parsing, section tables, and `NcaBuilder`.
+  - Comprehensive HID controller emulation (Pro Controller, Joy-Con pairs, dual analogs, SixAxis IMU).
+  - 200 Hz shared memory ring buffer for zero-IPC controller polling.
+  - Horizon OS system services: `set:sys`, `appletOE`, `appletAE`, and `acc:u0`.
+- [x] **Milestone 10: Multi-Core Threading, Kernel Scheduler & Title Orchestration**
+  - 4-core Cortex-A57 scheduler (Cores 0-2 Title, Core 3 OS) with priority-based run queues.
+  - Architectural thread context switching, register preservation, and thread affinity mask configuration.
+  - Horizon OS thread lifecycle SVCs (0x08 `svcCreateThread`, 0x09 `svcStartThread`, 0x0A `svcExitThread`, 0x0F `svcSetThreadCoreMask`, 0x25 `svcGetThreadId`).
+  - Fast userland mutex (futex) arbitration: 0x1A `svcArbitrateLock` and 0x1B `svcArbitrateUnlock`.
+  - Cross-thread event signaling (`svcSignalEvent`) awakening waiting threads.
 
 ---
 
