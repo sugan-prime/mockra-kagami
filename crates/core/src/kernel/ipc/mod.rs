@@ -1,10 +1,16 @@
+pub mod account;
+pub mod applet;
 pub mod cmif;
 pub mod hid;
+pub mod settings;
 pub mod sm;
 pub mod time;
 
+pub use account::AccountService;
+pub use applet::AppletManagerService;
 pub use cmif::{CmifError, CmifRequest, CmifResponse};
-pub use hid::HidService;
+pub use hid::{buttons, style_set, AnalogStick, ControllerState, HidService, SixAxisMotion};
+pub use settings::SettingsService;
 pub use sm::ServiceManager;
 pub use time::TimeService;
 

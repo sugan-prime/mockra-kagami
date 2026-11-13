@@ -39,6 +39,12 @@ impl ServiceManager {
         sm.register_factory("audren:u", || Arc::new(crate::audio::AudioRendererService::new()));
         sm.register_factory("audren:a", || Arc::new(crate::audio::AudioRendererService::new()));
         sm.register_factory("audren", || Arc::new(crate::audio::AudioRendererService::new()));
+        sm.register_factory("set:sys", || Arc::new(super::settings::SettingsService::new()));
+        sm.register_factory("set", || Arc::new(super::settings::SettingsService::new()));
+        sm.register_factory("appletOE", || Arc::new(super::applet::AppletManagerService::new()));
+        sm.register_factory("appletAE", || Arc::new(super::applet::AppletManagerService::new()));
+        sm.register_factory("acc:u0", || Arc::new(super::account::AccountService::new()));
+        sm.register_factory("acc:u1", || Arc::new(super::account::AccountService::new()));
 
         sm
     }

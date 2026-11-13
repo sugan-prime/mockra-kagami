@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 8)
+## ⚡ Current Capabilities (Milestones 0 - 9)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -121,8 +121,14 @@ flowchart TD
   - **AArch64 JIT Block Compiler (`cpu/jit/compiler.rs`)**: Control-flow discovery compiling linear instruction streams up to terminal instructions (`BranchDirect`, `BranchConditional`, `BranchCall`, `BranchRegister`, `CompareAndBranch`, `Svc`, `Fallback`).
   - **Block Cache & Chaining (`cpu/jit/cache.rs`)**: Fast basic block lookup repository with direct branch chaining and range invalidation for self-modifying code.
   - **JitEngine (`cpu/jit/engine.rs`)**: Accelerated block execution engine with seamless, transparent fallback to the pure CPU interpreter for uncompiled opcodes.
+- [x] **Commercial Game Readiness, HID Input & Title Packaging (`loader/nca.rs`, `kernel/ipc/`)**:
+  - **Nintendo Content Archive Subsystem (`loader/nca.rs`)**: Full NCA3 container parsing, section table resolution, ExeFS / RomFS extraction, and `NcaBuilder`.
+  - **HID Controller & Input Subsystem (`kernel/ipc/hid.rs`)**: Full gamepad emulation supporting Pro Controller, Handheld, Joy-Con pairs, dual analog sticks, SixAxis IMU motion sensors, and 200 Hz shared memory ring buffer updates.
+  - **System Settings Service (`kernel/ipc/settings.rs`)**: Language code configuration (`en-US`), UI theme colors, and country/region (`USA`).
+  - **Applet Manager Services (`kernel/ipc/applet.rs`)**: `appletOE` / `appletAE` application lifecycle proxy, Docked/Handheld operation mode switching, and display layers.
+  - **Account Management Services (`kernel/ipc/account.rs`)**: `acc:u0` / `acc:u1` user profile manager and active credentials.
 - [x] **Automated Test Suite**:
-  - 67 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, and JIT execution over Fastmem.
+  - 72 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, and the complete commercial game pipeline.
 
 ---
 

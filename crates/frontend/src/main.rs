@@ -90,7 +90,8 @@ fn run_horizon_nro(rom_path: &str) {
     println!("Display Surface: Handheld {}x{} RGBA8_UNORM", display.width, display.height);
     println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)");
     println!("Audio Services: audout:u, audren:u (DSP 48kHz Stereo)");
-    println!("JIT Engine:    BasicBlock Translation & Fastmem Paging\n");
+    println!("JIT Engine:    BasicBlock Translation & Fastmem Paging");
+    println!("System HLE:    set:sys, appletOE, acc:u0, hid (200Hz Shared Memory)\n");
 
     let mut cpu = Cpu::new();
     cpu.reset(HORIZON_LOAD_BASE + header.text.file_offset as u64);
