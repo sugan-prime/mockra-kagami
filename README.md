@@ -92,22 +92,33 @@ cargo run --bin frontend
 **Sample Output:**
 ```text
 === Switch-Emulator (Rust AArch64 Core Prototype) ===
+Milestone 1: Testing Memory Access, Flags & Control Flow
+
 Starting execution at PC: 0x0000000080000000...
 
-[Step 0001] Executed at 0x80000000
-[Step 0002] Executed at 0x80000004
-[Step 0003] Executed at 0x80000008
+[Step 0001] Executed at 0x80000000 (PC now: 0x80000004)
+[Step 0002] Executed at 0x80000004 (PC now: 0x80000008)
+[Step 0003] Executed at 0x80000008 (PC now: 0x8000000C)
+[Step 0004] Executed at 0x8000000C (PC now: 0x80000010)
+[Step 0034] Executed at 0x80000018 (PC now: 0x8000001C)
+[Step 0035] Executed at 0x8000001C (PC now: 0x80000020)
+[Step 0036] Executed at 0x80000020 (PC now: 0x80000024)
 
-[TRAP] Supervisor Call (SVC 0x0042) invoked at PC: 0x8000000C
+[TRAP] Supervisor Call (SVC 0x0042) invoked at PC: 0x80000024
 
 --- Register Dump ---
-  X0: 0x0000000000000064 (100)
-  X1: 0x000000000000015E (250)
-  X2: 0x00000000000001C2 (350)
-  X3: 0x0000000000000000 (0)
-  SP: 0x0000000000000000
-  PC: 0x0000000080000010
-  Cycles: 4
+  X0 (Counter):     0 (0x0000000000000000)
+  X1 (Sum Result):  55 (0x0000000000000037)
+  X2 (Target Addr): 0x0000000080002000
+  X3 (Loaded Back): 55 (0x0000000000000037)
+  SP:               0x0000000000000000
+  PC:               0x0000000080000028
+  Flags (NZCV):     N=0 Z=1 C=1 V=0
+  Total Cycles:     37
+
+--- Memory Verification ---
+  Value at 0x80002000: 55 (0x0000000000000037)
+  -> Memory write and read-back successfully verified!
 ```
 
 ---
@@ -116,10 +127,13 @@ Starting execution at PC: 0x0000000080000000...
 
 - [x] **Milestone 0: Scaffolding & Foundation**
   - Workspace structure, Register File, MemoryBus trait, ALU basics, SVC trap.
-- [ ] **Milestone 1: CPU Memory Access & Control Flow**
-  - Load/Store instructions: `LDR`, `STR` (unsigned offset, post/pre-indexed).
-  - Conditional branches: `B.cond` (`EQ`, `NE`, `LT`, `GE`, `GT`, `LE`).
-  - Flag-setting comparisons (`CMP`, `CMN`, `TST`).
+- [x] **Milestone 1: CPU Memory Access & Control Flow**
+  - Load/Store single: `LDR`, `STR`, `LDRSW`, `LDRH`, `STRH`, `LDRB`, `STRB` (unsigned immediate, post/pre-index, and unscaled offset).
+  - Load/Store pair: `LDP`, `STP` (post-index, pre-index, and signed offset).
+  - Conditional branches: `B.cond` (`EQ`, `NE`, `CS/HS`, `CC/LO`, `MI`, `PL`, `VS`, `VC`, `HI`, `LS`, `GE`, `LT`, `GT`, `LE`, `AL`).
+  - Compare and branch: `CBZ`, `CBNZ` (32-bit and 64-bit zero/non-zero branch).
+  - Register logicals: `AND`, `ORR` (`MOV`), `EOR`, `ANDS` (`TST`).
+  - Comparison operations: `CMP` (immediate & register via `SUBS` to `XZR`/`WZR`).
 - [ ] **Milestone 2: Bare-Metal Test ROM Runner**
   - Load flat `.bin` binaries into virtual memory.
   - Memory-mapped I/O (MMIO) UART output port for guest logging.
