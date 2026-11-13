@@ -82,6 +82,10 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  BSS Size:    0x{:X} bytes\n", header.bss_size);
 
     let mut kernel = KernelContext::new(true);
+    let profile = kernel.profiles.get_or_default(kernel.process.title_id);
+    println!("Game Profile:  {} (Target FPS: {})", profile.title_name, profile.target_fps);
+    println!("Root Service:  sm: (Handle: 0x{:04X})\n", kernel.sm_session_handle);
+
     let mut cpu = Cpu::new();
     cpu.reset(HORIZON_LOAD_BASE + header.text.file_offset as u64);
 
@@ -131,6 +135,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  Final PC:     0x{:016X}", cpu.regs.pc);
     println!("  Cycle Count:  {}", cpu.cycle_count);
     println!("  Alloc Heap:   0x{:X} bytes at 0x{:08X}", kernel.process.heap_size, kernel.process.heap_base);
+    println!("  Open Handles: {}", kernel.handles.len());
 }
 
 /// Executes a bare-metal flat ARM64 binary with MMIO UART.

@@ -43,14 +43,14 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 3)
+## ⚡ Current Capabilities (Milestones 0 - 4)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
   - Architecture-accurate Register 31 dual-role handling: reads as zero (`XZR`/`WZR`) in register context, or acts as Stack Pointer (`SP`) where architecturally specified.
   - Zero-extension guarantees: 32-bit `W` writes unconditionally clear upper 32 bits of 64-bit `X` registers.
   - Full `PSTATE` flags (`NZCV`: Negative, Zero, Carry, Overflow).
-  - SIMD/NEON vector register scaffolding (`V0`–`V31`, 128-bit).
+  - SIMD/NEON vector register scaffolding (`V0`–`V31`, 128-bit) and `TPIDR_EL0` Thread Local Storage register.
 - [x] **Memory & Interconnect Subsystem (`bus.rs`, `system_bus.rs`, `mmio.rs`)**:
   - `MemoryBus` trait decoupled from CPU execution.
   - Endian-safe little-endian integer reads and writes (8-bit, 16-bit, 32-bit, 64-bit).
@@ -69,14 +69,29 @@ flowchart TD
   - **NRO Parser**: Parses `NRO0` header, `.text`, `.rodata`, `.data`, `.bss`, and `MOD0` relative offset.
   - **Dynamic Relocations**: Parses `MOD0` ELF dynamic table (`DT_RELA`, `DT_RELASZ`) and resolves `R_AARCH64_RELATIVE` relocations at load base.
   - **Supervisor Call (SVC) Dispatcher**:
-    - `svcOutputDebugString` (0x27)
-    - `svcSetHeapSize` (0x35)
-    - `svcExitProcess` (0x07)
-    - `svcSleepThread` (0x0B)
-    - `svcGetInfo` (0x29)
+    - `svcOutputDebugString` (0x27): writes guest string buffers to host debug logger.
+    - `svcSetHeapSize` (0x35): expands process heap at `0x88000000`.
+    - `svcExitProcess` (0x07): signals graceful termination to interpreter loop.
+    - `svcSleepThread` (0x0B): yields single-threaded interpreter execution.
+    - `svcGetInfo` (0x29): returns core mask, physical RAM sizing (4GB), and memory limits.
+    - `svcCreateEvent` (0x45): creates connected readable/writable event pairs.
+    - `svcSignalEvent` (0x1E) & `svcClearEvent` (0x1F): signals/clears kernel synchronization events.
+    - `svcWaitSynchronization` (0x18): waits on single or multiple handles with timeout and auto-reset.
+    - `svcSendSyncRequest` (0x21): dispatches IPC requests to HLE services via TLS command buffer.
   - **In-Memory Codecave / IPSwitch Dynamic Patch Engine (`kernel/patch.rs`)**: Runtime memory overrides with expected-value guards for 60fps patches and bug fixes without altering binaries on disk.
+- [x] **Game Profile Registry & Title Configuration (`kernel/profile.rs`)**:
+  - Pre-populated title database keyed by 64-bit Title ID (`01007EF00011E000` BotW, `0100000000010000` Odyssey, `01006A800016E000` Smash Ultimate, `01006F8002326000` Animal Crossing, `0100152000022000` Mario Kart 8).
+  - Configures target FPS, heap sizing, and per-title GPU accuracy profiles.
+- [x] **Microkernel Handle Table & Object System (`kernel/handle_table.rs`, `kernel/object.rs`)**:
+  - 32-bit handle translation with pseudo-handle resolution (`CURRENT_PROCESS`, `CURRENT_THREAD`).
+  - Kernel object abstractions for `KEvent`, `KThread`, `KProcess`, and `KSession`.
+- [x] **Horizon IPC & Service Manager (`kernel/ipc/`)**:
+  - CMIF Request / Response header parsing and serialization (`SFCI` / `SFCO`).
+  - Root Service Manager (`sm:`): `Initialize` (Cmd 0) and `GetService` (Cmd 1).
+  - Time Service (`time:`): returns POSIX timestamps and system clock.
+  - Human Interface Device (`hid:`): gamepad activation and Npad configuration.
 - [x] **Automated Test Suite**:
-  - 24 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, and Horizon OS SVC syscalls.
+  - 38 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, and IPC services.
 
 ---
 
@@ -161,10 +176,10 @@ Hello Horizon OS from NRO!
   - Horizon OS SVC Dispatcher: `svcOutputDebugString` (0x27), `svcSetHeapSize` (0x35), `svcExitProcess` (0x07), `svcSleepThread` (0x0B), `svcGetInfo` (0x29).
   - Dynamic Codecave & In-Memory Patch Engine (IPSwitch / Cemu-style runtime patching).
   - Automated integration test executing an assembled Switch homebrew `.nro`.
-- [ ] **Milestone 4: Game Profiles & Multithreaded Kernel Objects**
+- [x] **Milestone 4: Game Profiles & Multithreaded Kernel Objects**
   - Per-TitleId Game Profile Registry (custom memory boundaries, timing quirks, and patch profiles).
-  - Microkernel synchronization & thread management (`KProcess`, `KThread`, `KEvent`, `KMutex`).
-  - Horizon OS IPC (Inter-Process Communication via CMIF / HIPC service dispatch: `sm:`, `fsp-srv`, `hid`, `time`).
+  - Microkernel synchronization & thread management (`KProcess`, `KThread`, `KEvent`, `HandleTable`).
+  - Horizon OS IPC (Inter-Process Communication via CMIF / HIPC service dispatch: `sm:`, `hid`, `time`).
 - [ ] **Milestone 5: GPU Subsystem & Graphics Presentation**
   - NVDRV service interface (`nvhost-ctrl`, `nvmap`, `ioctl` handling).
   - Tegra Command FIFO pushbuffer & 3D state machine.
