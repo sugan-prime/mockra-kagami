@@ -43,7 +43,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 6)
+## ⚡ Current Capabilities (Milestones 0 - 8)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -115,8 +115,14 @@ flowchart TD
   - **Audio Out Service (`audio/audout.rs`)**: Full HLE implementation for `audout:u` and `audout:a` (`ListAudioOuts`, `OpenAudioOut`, `AppendAudioOutBuffer`, `RegisterBufferEvent`, `GetReleasedAudioOutBuffers`, `ContainsAudioOutBuffer`).
   - **Audio Renderer Service (`audio/audren.rs`)**: Modern DSP pipeline for games (`audren:u`, `audren:a`) with `OpenAudioRenderer`, `RequestUpdate` command buffer parsing, voice state management, frame tick synchronization, and `IAudioDevice` volume control.
   - **Audio Diagnostics & Verification**: Stereo 48,000 Hz circular ring buffer, RMS energy and peak amplitude calculations, and automated RIFF/WAVE container file generation.
+- [x] **High-Performance JIT Execution & Fastmem (`cpu/jit/`, `memory/fastmem.rs`)**:
+  - **Fastmem Software Paging (`memory/fastmem.rs`)**: 4KB paged virtual memory manager providing O(1) page table resolution, page fault handling, RWX permission enforcement, and dirty page tracking for JIT and buffer cache coherency.
+  - **Basic Block Intermediate Representation (`cpu/jit/block.rs`)**: Pre-decoded `MicroOp` execution eliminating instruction fetch, decoding, and bit extraction bottlenecks.
+  - **AArch64 JIT Block Compiler (`cpu/jit/compiler.rs`)**: Control-flow discovery compiling linear instruction streams up to terminal instructions (`BranchDirect`, `BranchConditional`, `BranchCall`, `BranchRegister`, `CompareAndBranch`, `Svc`, `Fallback`).
+  - **Block Cache & Chaining (`cpu/jit/cache.rs`)**: Fast basic block lookup repository with direct branch chaining and range invalidation for self-modifying code.
+  - **JitEngine (`cpu/jit/engine.rs`)**: Accelerated block execution engine with seamless, transparent fallback to the pure CPU interpreter for uncompiled opcodes.
 - [x] **Automated Test Suite**:
-  - 62 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, and audio DSP streaming.
+  - 67 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, and JIT execution over Fastmem.
 
 ---
 
