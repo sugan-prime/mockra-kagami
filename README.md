@@ -45,7 +45,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 10)
+## ⚡ Current Capabilities (Milestones 0 - 11)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -117,7 +117,16 @@ flowchart TD
 - [x] **Persistent Maxwell Shader Cache (`gpu/shader_cache.rs`)**:
   - 64-bit FNV-1a and MurmurHash3 bytecode hashing across Vertex, Fragment, and Compute pipeline stages.
 - [x] **Visual Interface (VI) Display Engine (`gpu/display.rs`)**:
-  - Presentation surface supporting Handheld 720p (1280x720) and Docked 1080p (1920x1080) with RGBA8_UNORM pixel buffer extraction.
+  - Presentation surface supporting Handheld 720p (1280x720) and Docked 1080p (1920x1080) with direct Tegra block-linear frame extraction.
+- [x] **Tegra Block-Linear Texture Swizzling Engine (`gpu/texture.rs`)**:
+  - Hardware-accurate GOB (Group of Bytes: 64B wide $\times$ 8 lines high) Morton order swizzling and deswizzling.
+  - Bit parallel deposit `pdep_u32` implementation for spatial 2D cache locality.
+  - Surface swizzling across RGBA8, RGB565, R8, RGBA16F, RGBA32F, and block-compressed textures (BC1, BC2, BC3, BC4, BC5, BC7).
+- [x] **Maxwell SASS Shader Recompiler & Decompiler (`gpu/shader/`)**:
+  - 64-bit Maxwell instruction decoder (`FFMA`, `FADD`, `FMUL`, `FMNMX`, `FCMP`, `MUFU`, `LDC`, `LDG`, `STG`, `ALD`, `AST`, `TEX`, `BRA`, `KIL`, `EXIT`).
+  - Predicate extraction (`PT` unconditional true, conditional branches).
+  - Intermediate Representation (NVIR) with automated resource analysis (attributes, uniforms, samplers).
+  - Target code emission: Decompiles SASS bytecode directly into standard WebGPU (WGSL) and GLSL shaders.
 - [x] **Virtual File System & Package Subsystem (`fs/`)**:
   - **PFS0 / NSP Container Engine (`fs/pfs0.rs`)**: Partition parser and extractor for application packages.
   - **RomFS Asset FileSystem (`fs/romfs.rs`)**: Virtual hierarchical directory tree reader mounting `romfs:/` assets.
@@ -141,7 +150,7 @@ flowchart TD
   - **Applet Manager Services (`kernel/ipc/applet.rs`)**: `appletOE` / `appletAE` application lifecycle proxy, Docked/Handheld operation mode switching, and display layers.
   - **Account Management Services (`kernel/ipc/account.rs`)**: `acc:u0` / `acc:u1` user profile manager and active credentials.
 - [x] **Automated Test Suite**:
-  - 79 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, commercial game readiness, and multi-core thread scheduling with futex arbitration.
+  - 88 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, block-linear texture swizzling, Maxwell SASS decompilation, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, commercial game readiness, and multi-core thread scheduling with futex arbitration.
 
 ---
 
@@ -260,6 +269,13 @@ Hello Horizon OS from NRO!
   - Horizon OS thread lifecycle SVCs (0x08 `svcCreateThread`, 0x09 `svcStartThread`, 0x0A `svcExitThread`, 0x0F `svcSetThreadCoreMask`, 0x25 `svcGetThreadId`).
   - Fast userland mutex (futex) arbitration: 0x1A `svcArbitrateLock` and 0x1B `svcArbitrateUnlock`.
   - Cross-thread event signaling (`svcSignalEvent`) awakening waiting threads.
+- [x] **Milestone 11: Tegra Texture Swizzling Engine & Maxwell/Ampere Shader Decompiler**
+  - Hardware-accurate Tegra GOB Morton swizzling and deswizzling with parallel bit deposit (`pdep_u32`).
+  - Pixel and block-compressed format swizzling (RGBA8, RGB565, R8, RGBA16F, BC1, BC2, BC3, BC4, BC5, BC7).
+  - Direct block-linear VI display surface frame presentation.
+  - 64-bit Maxwell SASS instruction decoding and predicate evaluation.
+  - Intermediate Representation (NVIR) with automated resource discovery (attributes, uniforms, samplers).
+  - WebGPU (WGSL) and GLSL shader code emission.
 
 ---
 

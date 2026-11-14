@@ -3,6 +3,7 @@
 //! Models the Horizon OS VI (Visual Interface) presentation surface,
 //! converting guest GPU render targets into 720p / 1080p displayable frames.
 
+use crate::gpu::texture::{calculate_block_linear_size, deswizzle_block_linear_to_pitch};
 use crate::memory::bus::{MemoryBus, MemoryError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,6 +29,8 @@ pub struct DisplaySurface {
     pub height: u32,
     pub format: ColorFormat,
     pub framebuffer_address: u64,
+    pub is_block_linear: bool,
+    pub block_height_gobs: usize,
 }
 
 impl Default for DisplaySurface {
@@ -43,7 +46,16 @@ impl DisplaySurface {
             height,
             format,
             framebuffer_address,
+            is_block_linear: false,
+            block_height_gobs: 16,
         }
+    }
+
+    /// Sets the surface memory layout to Tegra block-linear.
+    pub fn with_block_linear(mut self, block_height_gobs: usize) -> Self {
+        self.is_block_linear = true;
+        self.block_height_gobs = block_height_gobs.max(1);
+        self
     }
 
     /// Creates a 720p (1280x720) handheld surface.
@@ -72,6 +84,26 @@ impl DisplaySurface {
 
         Ok(pixels)
     }
+
+    /// Reads pixel buffer and automatically deswizzles if the surface is stored in block-linear format.
+    pub fn extract_presentation_frame(&self, bus: &impl MemoryBus) -> Result<Vec<u8>, MemoryError> {
+        if !self.is_block_linear {
+            return self.extract_pixels(bus);
+        }
+
+        let w = self.width as usize;
+        let h = self.height as usize;
+        let bpp = self.format.bytes_per_pixel();
+        let tiled_size = calculate_block_linear_size(w, h, bpp, self.block_height_gobs);
+
+        let mut tiled_bytes = Vec::with_capacity(tiled_size);
+        for i in 0..tiled_size {
+            let b = bus.read_u8(self.framebuffer_address.wrapping_add(i as u64))?;
+            tiled_bytes.push(b);
+        }
+
+        Ok(deswizzle_block_linear_to_pitch(&tiled_bytes, w, h, bpp, self.block_height_gobs))
+    }
 }
 
 #[cfg(test)]
@@ -96,5 +128,36 @@ mod tests {
         let pixels = surface.extract_pixels(&mem).unwrap();
         assert_eq!(pixels.len(), 32);
         assert_eq!(pixels[0..4], [255, 0, 0, 255]);
+    }
+
+    #[test]
+    fn test_display_surface_block_linear_presentation() {
+        use crate::gpu::texture::swizzle_pitch_to_block_linear;
+
+        let width = 64;
+        let height = 16;
+        let bpp = 4;
+        let block_height = 2;
+
+        let mut linear = vec![0u8; width * height * bpp];
+        linear[0] = 0xAA;
+        linear[1] = 0xBB;
+        linear[2] = 0xCC;
+        linear[3] = 0xFF;
+
+        let swizzled = swizzle_pitch_to_block_linear(&linear, width, height, bpp, block_height);
+
+        let fb_addr = 0x2000;
+        let mut mem = FlatMemory::new(0, 0x40000);
+        for (i, &b) in swizzled.iter().enumerate() {
+            mem.write_u8(fb_addr + i as u64, b).unwrap();
+        }
+
+        let surface = DisplaySurface::new(width as u32, height as u32, ColorFormat::Rgba8Unorm, fb_addr)
+            .with_block_linear(block_height);
+
+        let presented = surface.extract_presentation_frame(&mem).unwrap();
+        assert_eq!(presented.len(), linear.len());
+        assert_eq!(presented, linear);
     }
 }

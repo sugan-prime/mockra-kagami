@@ -49,6 +49,24 @@ pub const fn sign_extend_32(val: u32, bit_count: u32) -> i32 {
     ((val as i32) << shift) >> shift
 }
 
+/// Parallel bit deposit (PDEP): deposits contiguous low-order bits from `value`
+/// into positions specified by the set bits of `mask`.
+#[inline(always)]
+pub const fn pdep_u32(value: u32, mask: u32) -> u32 {
+    let mut res = 0u32;
+    let mut m = mask;
+    let mut bit = 1u32;
+    while m != 0 {
+        let lowest = m & (!m).wrapping_add(1);
+        if value & bit != 0 {
+            res |= lowest;
+        }
+        m &= m.wrapping_sub(1);
+        bit = bit.wrapping_add(bit);
+    }
+    res
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,5 +100,13 @@ mod tests {
 
         // 16-bit negative: 0xFFFF (-1)
         assert_eq!(sign_extend_64(0xFFFF, 16), -1);
+    }
+
+    #[test]
+    fn test_pdep_u32() {
+        assert_eq!(pdep_u32(0b1011, 0b10101010), 0b10001010);
+        assert_eq!(pdep_u32(0b11, 0b0101), 0b0101);
+        assert_eq!(pdep_u32(0, 0xFFFF), 0);
+        assert_eq!(pdep_u32(0xFFFF, 0), 0);
     }
 }

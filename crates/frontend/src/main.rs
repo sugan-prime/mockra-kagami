@@ -86,11 +86,12 @@ fn run_horizon_nro(rom_path: &str) {
     println!("Game Profile:  {} (Target FPS: {})", profile.title_name, profile.target_fps);
     println!("Root Service:  sm: (Handle: 0x{:04X})", kernel.sm_session_handle);
 
-    let display = emu_core::gpu::DisplaySurface::handheld_720p(0x9000_0000);
-    println!("Display Surface: Handheld {}x{} RGBA8_UNORM", display.width, display.height);
+    let display = emu_core::gpu::DisplaySurface::handheld_720p(0x9000_0000).with_block_linear(16);
+    println!("Display Surface: Handheld {}x{} RGBA8_UNORM (Tegra Block-Linear)", display.width, display.height);
     println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)");
     println!("Audio Services: audout:u, audren:u (DSP 48kHz Stereo)");
     println!("JIT Engine:    BasicBlock Translation & Fastmem Paging");
+    println!("Graphics Core: Maxwell 3D, GOB Deswizzler & SASS Shader Decompiler");
     println!("Scheduler:     4 Cores (Cores 0-2 Title, Core 3 OS) & Futex Arbitration");
     println!("System HLE:    set:sys, appletOE, acc:u0, hid (200Hz Shared Memory)\n");
 
@@ -145,7 +146,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  Alloc Heap:   0x{:X} bytes at 0x{:08X}", kernel.process.heap_size, kernel.process.heap_base);
     println!("  Open Handles: {}", kernel.handles.len());
     println!("  Active Threads: {}", kernel.scheduler.active_thread_count());
-    println!("  GPU Display:  {}x{} Handheld Surface", display.width, display.height);
+    println!("  GPU Display:  {}x{} Handheld Surface (Tegra Block-Linear)", display.width, display.height);
 }
 
 /// Executes a bare-metal flat ARM64 binary with MMIO UART.
