@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn test_host_filesystem_read_write() {
-        let temp_dir = env::temp_dir().join("switch_emu_save_test");
+        let temp_dir = env::temp_dir().join("mockra_kagami_save_test");
         let fs = HostFileSystem::new(&temp_dir).unwrap();
 
         let test_file = "game_save.dat";

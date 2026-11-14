@@ -237,7 +237,7 @@ mod tests {
     #[test]
     fn test_fsp_srv_mount_romfs_and_read_file() {
         let mut builder = RomfsBuilder::new();
-        builder.add_file("/title.txt", b"Switch Emulator VFS".to_vec());
+        builder.add_file("/title.txt", b"Mockra Kagami VFS".to_vec());
         let romfs = Arc::new(builder.build());
 
         let fsp = FileSystemProxyService::new().with_romfs(romfs);
@@ -281,6 +281,6 @@ mod tests {
 
         assert_eq!(size_ctx.response.result_code, 0);
         let file_size = u64::from_le_bytes(size_ctx.response.raw_data[0..8].try_into().unwrap());
-        assert_eq!(file_size, 19);
+        assert_eq!(file_size, 17);
     }
 }

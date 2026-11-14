@@ -41,7 +41,7 @@ fn test_fsp_srv_ipc_romfs_and_save_data_flow() {
     let romfs = Arc::new(romfs_builder.build());
 
     // 2. Setup HostFileSystem for user save data in temporary directory
-    let temp_save_dir = env::temp_dir().join("switch_emu_integration_save_dir");
+    let temp_save_dir = env::temp_dir().join("mockra_kagami_integration_save_dir");
     let save_fs = Arc::new(HostFileSystem::new(&temp_save_dir).unwrap());
 
     // 3. Register custom fsp-srv configured with this application's RomFS & SaveData

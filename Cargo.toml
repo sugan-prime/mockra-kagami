@@ -12,7 +12,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["Starvald Labs"]
 description = "Mockra Kagami - Experimental, modular AArch64 & Horizon OS console emulator"
-repository = "https://github.com/sugan-prime/switch-emulator"
+repository = "https://github.com/sugan-prime/mockra-kagami"
 
 [workspace.dependencies]
 common = { path = "crates/common" }
