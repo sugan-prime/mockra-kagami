@@ -90,6 +90,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("Display Surface: Handheld {}x{} RGBA8_UNORM (Tegra Block-Linear)", display.width, display.height);
     println!("VFS Services:  fsp-srv, RomFS, SaveData (save:/)");
     println!("Audio Services: audout:u, audren:u (DSP 48kHz Stereo)");
+    println!("Network Core:  nifm:u (IP 192.168.1.105), bsd:u (Loopback Sockets)");
     println!("JIT Engine:    BasicBlock Translation & Fastmem Paging");
     println!("Graphics Core: Maxwell 3D, GOB Deswizzler & SASS Shader Decompiler");
     println!("Scheduler:     4 Cores (Cores 0-2 Title, Core 3 OS) & Futex Arbitration");
@@ -146,6 +147,7 @@ fn run_horizon_nro(rom_path: &str) {
     println!("  Alloc Heap:   0x{:X} bytes at 0x{:08X}", kernel.process.heap_size, kernel.process.heap_base);
     println!("  Open Handles: {}", kernel.handles.len());
     println!("  Active Threads: {}", kernel.scheduler.active_thread_count());
+    println!("  Network State: Loopback Ready (nifm:u / bsd:u)");
     println!("  GPU Display:  {}x{} Handheld Surface (Tegra Block-Linear)", display.width, display.height);
 }
 

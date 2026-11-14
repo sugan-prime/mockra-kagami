@@ -45,7 +45,7 @@ flowchart TD
 
 ---
 
-## ⚡ Current Capabilities (Milestones 0 - 11)
+## ⚡ Current Capabilities (Milestones 0 - 12)
 
 - [x] **AArch64 Register File (`registers.rs`)**:
   - 31 General Purpose 64-bit registers (`X0`–`X30`).
@@ -149,8 +149,12 @@ flowchart TD
   - **System Settings Service (`kernel/ipc/settings.rs`)**: Language code configuration (`en-US`), UI theme colors, and country/region (`USA`).
   - **Applet Manager Services (`kernel/ipc/applet.rs`)**: `appletOE` / `appletAE` application lifecycle proxy, Docked/Handheld operation mode switching, and display layers.
   - **Account Management Services (`kernel/ipc/account.rs`)**: `acc:u0` / `acc:u1` user profile manager and active credentials.
+- [x] **Network Subsystem & Horizon BSD Sockets (`kernel/ipc/nifm.rs`, `kernel/ipc/bsd.rs`)**:
+  - **Network Interface Manager (`nifm:u`, `nifm:s`, `nifm:a`)**: `CreateGeneralService`, `GetInternetConnectionStatus`, IP configuration queries (`192.168.1.105` mock), and asynchronous connection request sessions with `KEvent` completion signaling.
+  - **Horizon BSD Socket Interface (`bsd:u`, `bsd:s`)**: Socket allocation (`AF_INET`, `SOCK_DGRAM`, `SOCK_STREAM`), address binding (`Bind`), datagram send/receive (`SendTo`, `RecvFrom`), non-blocking flag manipulation (`Fcntl`), and loopback UDP packet routing.
+  - Architecture-accurate BSD `errno` reporting, buffer length boundaries, and CMIF IPC request dispatching.
 - [x] **Automated Test Suite**:
-  - 88 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, block-linear texture swizzling, Maxwell SASS decompilation, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, commercial game readiness, and multi-core thread scheduling with futex arbitration.
+  - 95 automated unit and integration tests verifying ARM64 ALU, register invariants, bare-metal UART execution, NRO dynamic relocations, event synchronization, IPC services, GPU rendering, block-linear texture swizzling, Maxwell SASS decompilation, the VFS pipeline, audio DSP streaming, JIT execution over Fastmem, commercial game readiness, multi-core thread scheduling with futex arbitration, and the network BSD/NIFM subsystem.
 
 ---
 
@@ -276,6 +280,10 @@ Hello Horizon OS from NRO!
   - 64-bit Maxwell SASS instruction decoding and predicate evaluation.
   - Intermediate Representation (NVIR) with automated resource discovery (attributes, uniforms, samplers).
   - WebGPU (WGSL) and GLSL shader code emission.
+- [x] **Milestone 12: Network Subsystem, BSD Sockets & NIFM Interface Manager**
+  - Horizon Network Interface Manager (`nifm:u`, `nifm:a`, `nifm:s`): General service query, network request lifecycle, and async connection events.
+  - Horizon BSD Socket subsystem (`bsd:u`, `bsd:s`): Socket table management, `AF_INET` IPv4 UDP/TCP socket support, address serialization, loopback datagram routing, and non-blocking `Fcntl`.
+  - Comprehensive automated IPC integration tests (`test_network_pipeline.rs`).
 
 ---
 

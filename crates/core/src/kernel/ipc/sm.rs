@@ -45,6 +45,19 @@ impl ServiceManager {
         sm.register_factory("appletAE", || Arc::new(super::applet::AppletManagerService::new()));
         sm.register_factory("acc:u0", || Arc::new(super::account::AccountService::new()));
         sm.register_factory("acc:u1", || Arc::new(super::account::AccountService::new()));
+        sm.register_factory("nifm:u", || Arc::new(super::nifm::NifmService::new()));
+        sm.register_factory("nifm:a", || Arc::new(super::nifm::NifmService::new()));
+        sm.register_factory("nifm", || Arc::new(super::nifm::NifmService::new()));
+        let bsd_table = Arc::new(std::sync::Mutex::new(super::bsd::BsdSocketTable::new()));
+        let bsd_table_s = bsd_table.clone();
+        sm.register_factory("bsd:u", move || Arc::new(super::bsd::BsdService {
+            name: "bsd:u".to_string(),
+            socket_table: bsd_table.clone(),
+        }));
+        sm.register_factory("bsd:s", move || Arc::new(super::bsd::BsdService {
+            name: "bsd:s".to_string(),
+            socket_table: bsd_table_s.clone(),
+        }));
 
         sm
     }

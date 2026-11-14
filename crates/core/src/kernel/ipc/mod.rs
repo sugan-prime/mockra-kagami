@@ -1,15 +1,19 @@
 pub mod account;
 pub mod applet;
+pub mod bsd;
 pub mod cmif;
 pub mod hid;
+pub mod nifm;
 pub mod settings;
 pub mod sm;
 pub mod time;
 
 pub use account::AccountService;
 pub use applet::AppletManagerService;
+pub use bsd::{errno as bsd_errno, BsdService, BsdSocket, BsdSocketTable, SockAddrIn, AF_INET, SOCK_DGRAM, SOCK_STREAM};
 pub use cmif::{CmifError, CmifRequest, CmifResponse};
 pub use hid::{buttons, style_set, AnalogStick, ControllerState, HidService, SixAxisMotion};
+pub use nifm::{GeneralService, IpConfig, NetworkRequestSession, NifmService, RequestState};
 pub use settings::SettingsService;
 pub use sm::ServiceManager;
 pub use time::TimeService;
