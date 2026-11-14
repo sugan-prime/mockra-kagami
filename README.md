@@ -2,6 +2,8 @@
 
 An experimental, modular AArch64 and Horizon OS console emulator written in **Rust** from the ground up, produced by **Starvald Labs**, with a primary focus on clean architectural separation, accuracy, and test-driven systems engineering.
 
+**Repository**: [https://github.com/sugan-prime/mockra-kagami](https://github.com/sugan-prime/mockra-kagami)
+
 ---
 
 ## 🏛️ Architecture Overview
