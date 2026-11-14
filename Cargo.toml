@@ -10,6 +10,9 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+authors = ["Starvald Labs"]
+description = "Mockra Kagami - Experimental, modular AArch64 & Horizon OS console emulator"
+repository = "https://github.com/sugan-prime/switch-emulator"
 
 [workspace.dependencies]
 common = { path = "crates/common" }

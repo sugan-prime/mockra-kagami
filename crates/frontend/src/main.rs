@@ -17,7 +17,7 @@ const HORIZON_HEAP_BASE: u64 = 0x8800_0000;
 const HORIZON_HEAP_SIZE: usize = 0x40_0000;  // 4 MB
 
 fn main() {
-    println!("=== Switch-Emulator (Rust AArch64 & Horizon OS HLE Runner) ===\n");
+    println!("=== Mockra Kagami (Rust AArch64 & Horizon OS HLE Runner) by Starvald Labs ===\n");
 
     let args: Vec<String> = env::args().collect();
     let rom_path = if args.len() > 1 {

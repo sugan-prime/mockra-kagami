@@ -1,6 +1,6 @@
-# Switch-Emulator
+# Mockra Kagami
 
-An experimental, modular Nintendo Switch / Switch 2 emulator written in **Rust** from the ground up, with a primary focus on clean architectural separation, accuracy, and test-driven systems engineering.
+An experimental, modular AArch64 and Horizon OS console emulator written in **Rust** from the ground up, produced by **Starvald Labs**, with a primary focus on clean architectural separation, accuracy, and test-driven systems engineering.
 
 ---
 
@@ -174,7 +174,7 @@ cargo run --bin frontend -- tests/test_roms/hello_uart.bin
 
 **Horizon OS NRO Execution Output:**
 ```text
-=== Switch-Emulator (Rust AArch64 & Horizon OS HLE Runner) ===
+=== Mockra Kagami (Rust AArch64 & Horizon OS HLE Runner) by Starvald Labs ===
 
 Examining target binary: tests/test_roms/hello_horizon.nro
 Detected format: Nintendo Relocatable Object (NRO0)
